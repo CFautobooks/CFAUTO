@@ -1,13 +1,14 @@
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
+import { integrationCatalog } from "@/lib/constants";
 
 export default function SettingsPage() {
   return (
     <AppShell>
       <PageHeader
         eyebrow="Settings"
-        title="Business and integrations"
-        description="Configure your business profile and prepare accounting integrations for the next release."
+        title="Business, sending rules and integrations"
+        description="Configure your service business profile, sender identity and the tools RecoverFlow uses to find and recover missed revenue."
       />
 
       <div className="grid gap-6 xl:grid-cols-[1fr_420px]">
@@ -16,8 +17,8 @@ export default function SettingsPage() {
           <div className="mt-6 grid gap-4 md:grid-cols-2">
             {[
               "Business name",
-              "ABN",
-              "Default GST treatment",
+              "Industry",
+              "Default sender name",
               "Primary contact",
               "Email",
               "Phone",
@@ -34,22 +35,22 @@ export default function SettingsPage() {
         </section>
 
         <section className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-          <h2 className="text-xl font-bold text-[#0b1f3a]">Accounting integrations</h2>
+          <h2 className="text-xl font-bold text-[#0b1f3a]">Product integrations</h2>
           <p className="mt-2 text-sm text-slate-600">
-            Integration records are included in the database schema. Live MYOB and Xero
-            connections are marked coming soon for this MVP.
+            Integration records are included in the database schema. OAuth and webhook handshakes
+            are scaffolded for the products needed by the recovery workflow.
           </p>
-          {["MYOB", "Xero"].map((integration) => (
+          {integrationCatalog.map((integration) => (
             <div
-              key={integration}
+              key={integration.provider}
               className="mt-5 flex items-center justify-between rounded-2xl border border-slate-200 p-4"
             >
               <div>
-                <p className="font-bold text-[#0b1f3a]">{integration}</p>
-                <p className="text-sm text-slate-500">Export approved transactions</p>
+                <p className="font-bold text-[#0b1f3a]">{integration.name}</p>
+                <p className="text-sm text-slate-500">{integration.purpose}</p>
               </div>
               <button className="rounded-full bg-slate-100 px-4 py-2 text-sm font-bold text-slate-500">
-                Coming soon
+                Connect
               </button>
             </div>
           ))}

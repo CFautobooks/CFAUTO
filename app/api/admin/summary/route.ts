@@ -29,24 +29,32 @@ export async function GET(request: Request) {
     }
 
     const supabase = createAdminSupabaseClient();
-    const [profiles, documents, failures, needsReview] = await Promise.all([
+    const [profiles, openCases, messagesSent, failedSends, recoveredCases] = await Promise.all([
       supabase.from("profiles").select("id", { count: "exact", head: true }),
-      supabase.from("documents").select("id", { count: "exact", head: true }),
       supabase
-        .from("extraction_logs")
+        .from("follow_up_cases")
+        .select("id", { count: "exact", head: true })
+        .not("status", "in", "(recovered,closed)"),
+      supabase
+        .from("follow_up_messages")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "sent"),
+      supabase
+        .from("follow_up_messages")
         .select("id", { count: "exact", head: true })
         .eq("status", "failed"),
       supabase
-        .from("transactions")
+        .from("follow_up_cases")
         .select("id", { count: "exact", head: true })
-        .eq("status", "needs_review"),
+        .eq("status", "recovered"),
     ]);
 
     return NextResponse.json({
       users: profiles.count ?? 0,
-      uploads: documents.count ?? 0,
-      failed_extractions: failures.count ?? 0,
-      needs_review: needsReview.count ?? 0,
+      open_cases: openCases.count ?? 0,
+      messages_sent: messagesSent.count ?? 0,
+      failed_sends: failedSends.count ?? 0,
+      recovered_cases: recoveredCases.count ?? 0,
     });
   } catch (error) {
     return NextResponse.json(

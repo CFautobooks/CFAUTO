@@ -54,10 +54,11 @@ export default function LoginPage() {
             {appName}
           </Link>
           <h1 className="mt-10 max-w-2xl text-6xl font-black tracking-tight">
-            Turn paperwork into review-ready bookkeeping data.
+            Turn missed follow-ups into recovered revenue.
           </h1>
           <p className="mt-6 max-w-xl text-lg leading-8 text-slate-200">
-            Secure login for businesses, bookkeepers and Carmichael Financials staff.
+            Secure login for owners and teams managing invoice, quote, lead and appointment
+            recovery.
           </p>
         </div>
       </section>
@@ -68,7 +69,7 @@ export default function LoginPage() {
             {mode === "login" ? "Welcome back" : "Create account"}
           </p>
           <h2 className="mt-3 text-3xl font-bold text-[#0b1f3a]">
-            {mode === "login" ? "Login to CF AutoBooks" : "Sign up for CF AutoBooks"}
+            {mode === "login" ? `Login to ${appName}` : `Sign up for ${appName}`}
           </h2>
 
           <label className="mt-8 block">
