@@ -29,32 +29,23 @@ export async function GET(request: Request) {
     }
 
     const supabase = createAdminSupabaseClient();
-    const [profiles, openCases, messagesSent, failedSends, recoveredCases] = await Promise.all([
+    const [profiles, missedCalls, conversations, leads, emergencies] = await Promise.all([
       supabase.from("profiles").select("id", { count: "exact", head: true }),
+      supabase.from("missed_calls").select("id", { count: "exact", head: true }),
+      supabase.from("conversations").select("id", { count: "exact", head: true }),
+      supabase.from("leads").select("id", { count: "exact", head: true }),
       supabase
-        .from("follow_up_cases")
+        .from("leads")
         .select("id", { count: "exact", head: true })
-        .not("status", "in", "(recovered,closed)"),
-      supabase
-        .from("follow_up_messages")
-        .select("id", { count: "exact", head: true })
-        .eq("status", "sent"),
-      supabase
-        .from("follow_up_messages")
-        .select("id", { count: "exact", head: true })
-        .eq("status", "failed"),
-      supabase
-        .from("follow_up_cases")
-        .select("id", { count: "exact", head: true })
-        .eq("status", "recovered"),
+        .eq("status", "emergency"),
     ]);
 
     return NextResponse.json({
       users: profiles.count ?? 0,
-      open_cases: openCases.count ?? 0,
-      messages_sent: messagesSent.count ?? 0,
-      failed_sends: failedSends.count ?? 0,
-      recovered_cases: recoveredCases.count ?? 0,
+      missed_calls: missedCalls.count ?? 0,
+      conversations: conversations.count ?? 0,
+      leads: leads.count ?? 0,
+      emergencies: emergencies.count ?? 0,
     });
   } catch (error) {
     return NextResponse.json(

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LogOut, Send } from "lucide-react";
+import { LogOut, PhoneCall } from "lucide-react";
 import { appName, navItems, parentBusiness } from "@/lib/constants";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
 import { clsx } from "clsx";
@@ -24,7 +24,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <aside className="fixed inset-y-0 left-0 hidden w-72 border-r border-slate-200 bg-[#0b1f3a] px-5 py-6 text-white lg:block">
         <Link href="/" className="flex items-center gap-3">
           <span className="rounded-2xl bg-emerald-500 p-3 text-white">
-            <Send size={24} />
+            <PhoneCall size={24} />
           </span>
           <span>
             <span className="block text-xl font-bold">{appName}</span>
@@ -55,8 +55,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </nav>
 
         <div className="absolute inset-x-5 bottom-6 rounded-2xl bg-white/10 p-4 text-sm text-slate-200">
-          <p className="font-semibold text-white">Recovery autopilot</p>
-          <p className="mt-1">Connect inboxes, payment tools, CRMs and SMS to recover missed revenue.</p>
+          <p className="font-semibold text-white">Missed-call recovery</p>
+          <p className="mt-1">Instant SMS follow-up, AI qualification, and clean owner summaries.</p>
         </div>
       </aside>
 
@@ -67,14 +67,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               {appName}
             </Link>
             <div className="hidden text-sm text-slate-500 lg:block">
-              AI follow-ups for invoices, quotes, leads and repeat work
+              Miss a call. Don&apos;t lose the customer.
             </div>
             <div className="flex items-center gap-3">
               <Link
-                href="/import"
+                href="/simulator"
                 className="rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700"
               >
-                Import accounts
+                Test missed call
               </Link>
               <button
                 onClick={signOut}

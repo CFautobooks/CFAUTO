@@ -1,90 +1,163 @@
-export type FollowUpStatus =
+export type LeadStatus =
   | "new"
-  | "drafted"
-  | "scheduled"
-  | "sent"
-  | "replied"
-  | "recovered"
-  | "paused"
-  | "closed";
+  | "contacted"
+  | "booked"
+  | "quoted"
+  | "won"
+  | "lost"
+  | "spam"
+  | "personal"
+  | "wrong_number"
+  | "emergency";
 
-export type OutreachChannel = "email" | "sms" | "phone";
+export type ConversationCategory =
+  | "new_lead"
+  | "existing_customer"
+  | "emergency"
+  | "personal"
+  | "spam"
+  | "wrong_number"
+  | "unknown";
 
-export type CaseType = "invoice" | "quote" | "lead" | "appointment" | "repeat_service";
+export type ConversationStatus = "active" | "complete" | "stopped" | "escalated";
+export type Urgency = "low" | "medium" | "high" | "emergency";
+export type SenderType = "caller" | "ai" | "owner" | "system";
+export type MessageDirection = "inbound" | "outbound" | "internal";
+export type MissedCallStatus = "received" | "ignored" | "auto_replied" | "converted";
+export type ContactType = "customer" | "staff" | "family" | "vendor" | "other";
 
-export type IntegrationProvider =
-  | "gmail"
-  | "outlook"
-  | "quickbooks"
-  | "stripe"
-  | "square"
-  | "calendly"
-  | "hubspot"
-  | "jobber"
-  | "servicetitan"
-  | "twilio";
-
-export type Customer = {
+export type Business = {
   id: string;
-  user_id?: string;
-  business_id?: string | null;
-  company_name: string;
-  contact_name: string | null;
-  email: string | null;
-  phone: string | null;
-  lifecycle_stage: "lead" | "quoted" | "customer" | "past_customer";
-  total_revenue_at_risk: number;
-  last_contacted_at: string | null;
-  notes: string | null;
-  created_at?: string;
-  updated_at?: string;
+  owner_id?: string;
+  name: string;
+  industry: string;
+  timezone: string;
+  main_phone: string;
+  created_at: string;
 };
 
-export type FollowUpCase = {
+export type BusinessSettings = {
+  business_id: string;
+  auto_reply_enabled: boolean;
+  reply_after_missed_call: boolean;
+  reply_during_business_hours_only: boolean;
+  business_hours: Record<string, { open: string; close: string; enabled: boolean }>;
+  after_hours_message: string;
+  emergency_keywords: string[];
+  ignored_keywords: string[];
+  max_ai_messages_per_conversation: number;
+  owner_notification_phone: string;
+  owner_notification_email: string;
+};
+
+export type PhoneNumber = {
   id: string;
-  user_id?: string;
-  business_id?: string | null;
-  customer_id: string | null;
-  customer?: Customer | null;
-  case_type: CaseType;
-  title: string;
-  source: IntegrationProvider | "csv" | "manual";
-  amount_cents: number;
-  currency: string;
-  due_date: string | null;
-  last_contacted_at: string | null;
-  next_follow_up_at: string | null;
-  recovery_score: number;
-  status: FollowUpStatus;
-  channel: OutreachChannel;
-  draft_subject: string | null;
-  draft_body: string | null;
-  sequence_name: string | null;
-  notes: string | null;
+  business_id: string;
+  phone_number: string;
+  label: string;
+  forwarding_enabled: boolean;
+  created_at: string;
+};
+
+export type MissedCall = {
+  id: string;
+  business_id: string;
+  caller_phone: string;
+  caller_name: string | null;
+  twilio_call_sid: string | null;
+  call_time: string;
+  status: MissedCallStatus;
+  auto_reply_sent: boolean;
+  ignored_reason: string | null;
+  created_at: string;
+};
+
+export type Conversation = {
+  id: string;
+  business_id: string;
+  missed_call_id: string | null;
+  caller_phone: string;
+  category: ConversationCategory;
+  status: ConversationStatus;
+  ai_summary: string | null;
+  confidence_score: number;
+  urgency: Urgency;
   created_at: string;
   updated_at: string;
 };
 
-export type FollowUpMessage = {
+export type Message = {
   id: string;
-  case_id: string;
-  user_id?: string;
-  channel: OutreachChannel;
-  subject: string | null;
+  conversation_id: string;
+  sender_type: SenderType;
+  sender_phone: string | null;
   body: string;
-  status: "draft" | "queued" | "sent" | "failed" | "replied";
-  provider: IntegrationProvider | null;
-  scheduled_at: string | null;
-  sent_at: string | null;
-  error_message: string | null;
+  twilio_message_sid: string | null;
+  direction: MessageDirection;
   created_at: string;
 };
 
-export type FollowUpDraft = {
-  subject: string;
-  body: string;
-  channel: OutreachChannel;
-  tone: "friendly" | "professional" | "firm";
-  recovery_score: number;
-  recommended_next_step: string;
+export type Lead = {
+  id: string;
+  business_id: string;
+  conversation_id: string;
+  name: string;
+  phone: string;
+  enquiry_type: string;
+  job_description: string;
+  urgency: Urgency;
+  address: string;
+  preferred_callback_time: string;
+  status: LeadStatus;
+  estimated_value: number | null;
+  notes: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type Contact = {
+  id: string;
+  business_id: string;
+  name: string;
+  phone: string;
+  contact_type: ContactType;
+  notes: string | null;
+  auto_reply_allowed: boolean;
+};
+
+export type BlockedNumber = {
+  id: string;
+  business_id: string;
+  phone: string;
+  reason: string;
+  created_at: string;
+};
+
+export type AiConversationResult = {
+  reply_to_caller: string;
+  category: ConversationCategory;
+  lead_complete: boolean;
+  urgency: Urgency;
+  extracted_details: {
+    name: string;
+    phone: string;
+    enquiry_type: string;
+    job_description: string;
+    address: string;
+    preferred_callback_time: string;
+  };
+  summary_for_owner: string;
+  confidence_score: number;
+  should_notify_owner_now: boolean;
+  should_stop_ai: boolean;
+};
+
+export type SimulatorState = {
+  business: Business;
+  settings: BusinessSettings;
+  missedCall: MissedCall | null;
+  conversation: Conversation | null;
+  messages: Message[];
+  lead: Lead | null;
+  ownerNotifications: string[];
 };

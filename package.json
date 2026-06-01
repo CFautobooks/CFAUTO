@@ -1,7 +1,7 @@
 {
-  "name": "recoverflow",
+  "name": "callback-ai",
   "version": "0.1.0",
-  "description": "AI revenue recovery SaaS for service businesses",
+  "description": "Missed-call AI follow-up SaaS for small businesses",
   "main": "index.js",
   "scripts": {
     "dev": "next dev",

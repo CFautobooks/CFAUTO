@@ -54,11 +54,11 @@ export default function LoginPage() {
             {appName}
           </Link>
           <h1 className="mt-10 max-w-2xl text-6xl font-black tracking-tight">
-            Turn missed follow-ups into recovered revenue.
+            Turn missed calls into customers.
           </h1>
           <p className="mt-6 max-w-xl text-lg leading-8 text-slate-200">
-            Secure login for owners and teams managing invoice, quote, lead and appointment
-            recovery.
+            Secure login for small businesses using AI SMS follow-up, lead capture and emergency
+            escalation.
           </p>
         </div>
       </section>

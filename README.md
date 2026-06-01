@@ -1,30 +1,56 @@
-# RecoverFlow
+# CallBack AI
 
-RecoverFlow is a full-stack SaaS MVP for service businesses that want to recover missed revenue from unpaid invoices, unanswered quotes, stale leads, missed appointment requests and repeat-service opportunities.
+CallBack AI is a full-stack SaaS MVP for missed-call recovery.
 
-The product imports opportunities from manual entry, CSV and planned integrations, drafts email/SMS follow-ups with AI, lets teams approve messages before sending, and tracks recovered revenue.
+**Positioning:** Miss a call. Don't lose the customer.
+
+When a small business misses a call, CallBack AI sends an SMS to the caller, has a short AI conversation, collects lead/job details, classifies the enquiry, and sends the owner a clean summary.
 
 ## Tech stack
 
 - Next.js + TypeScript
 - Tailwind CSS
-- Next.js API routes
-- Supabase Auth and Database with Row Level Security
-- OpenAI for follow-up draft generation
-- Vercel-ready project structure
+- Supabase Auth and Database
+- Twilio phone/SMS webhooks
+- OpenAI conversation handling
+- Stripe-ready pricing UI, no payment processing yet
+- Vercel-ready deployment
 
-## MVP features
+## MVP pages
 
-- Landing, login/signup, dashboard, import, accounts, follow-up review, customers, sequences, settings, pricing and admin screens
-- Manual import flow for invoices, quotes, leads, appointments and repeat-service opportunities
-- AI follow-up draft generation with safe fallback copy when OpenAI is not configured
-- Recovery scoring based on amount at risk, due date age and silence since last contact
-- Review-and-schedule workflow for email, SMS and phone-task follow-ups
-- Demo data so the app looks useful before Supabase is connected
-- Supabase schema for profiles, businesses, customers, follow-up cases, sequences, messages, recovery events and integrations
-- Integration catalog for Gmail, Outlook, QuickBooks, Stripe, Square, Calendly, HubSpot, Jobber, ServiceTitan and Twilio
+- `/` landing page
+- `/login` login/signup
+- `/dashboard` missed-call recovery dashboard
+- `/leads` leads inbox
+- `/leads/[id]` lead detail
+- `/conversations` AI SMS conversations
+- `/settings/phone` phone and missed-call settings
+- `/settings/ai` AI response settings
+- `/settings/business` business profile
+- `/contacts` contacts and blocked numbers
+- `/pricing` pricing UI
+- `/admin` platform/admin dashboard
+- `/simulator` missed-call simulator
 
-## Getting started
+## Core flow
+
+1. Business owner signs up.
+2. Business configures profile, phone number and AI settings.
+3. Twilio sends missed-call webhooks to `/api/twilio/missed-call`.
+4. The system checks auto-reply rules, blocked numbers, saved contacts, business hours, duplicate replies and max AI message limits.
+5. Eligible callers receive:
+
+   ```text
+   Hi, thanks for calling [Business Name]. Sorry we missed your call. What can we help with?
+   ```
+
+6. Caller replies by SMS.
+7. Twilio sends inbound SMS webhooks to `/api/twilio/inbound-sms`.
+8. OpenAI or mock AI classifies and continues the conversation.
+9. AI collects name, phone, reason, job type, urgency, address/location and preferred callback time.
+10. Once complete, or if emergency/personal/spam/wrong number is detected, the AI stops and creates an owner summary.
+
+## Local setup
 
 Install dependencies:
 
@@ -32,13 +58,38 @@ Install dependencies:
 npm install
 ```
 
-Copy the environment template:
+Copy env vars:
 
 ```bash
 cp .env.example .env.local
 ```
 
-Fill in:
+Run locally:
+
+```bash
+npm run dev
+```
+
+Open `http://localhost:3000`.
+
+## Mock mode
+
+The app works without Supabase, Twilio or OpenAI credentials.
+
+- Missing Twilio env vars: SMS sends are logged as mock sends.
+- Missing OpenAI env var: deterministic mock AI responses are used.
+- Missing Supabase env vars: demo screens and simulator still run.
+
+Use `/simulator` to test:
+
+- Missed call from a fake number
+- Caller SMS replies
+- AI classification
+- Emergency escalation
+- Personal/spam/wrong-number stopping
+- Lead creation and owner summary
+
+## Environment variables
 
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=
@@ -49,46 +100,112 @@ OPENAI_MODEL=gpt-4o-mini
 TWILIO_ACCOUNT_SID=
 TWILIO_AUTH_TOKEN=
 TWILIO_MESSAGING_SERVICE_SID=
-STRIPE_SECRET_KEY=
-STRIPE_WEBHOOK_SECRET=
+TWILIO_PHONE_NUMBER=
+NEXT_PUBLIC_APP_URL=
 ```
-
-Run the app locally:
-
-```bash
-npm run dev
-```
-
-Open `http://localhost:3000`.
 
 ## Supabase setup
 
 1. Create a Supabase project.
-2. Open the SQL editor.
+2. Open SQL editor.
 3. Run `supabase/schema.sql`.
-4. Add your Supabase URL, anon key and service role key to `.env.local`.
+4. Add Supabase env vars to `.env.local`.
 
-The schema creates:
+Tables:
 
 - `profiles`
 - `businesses`
-- `customers`
-- `follow_up_sequences`
-- `follow_up_cases`
-- `follow_up_messages`
-- `recovery_events`
-- `integrations`
+- `business_settings`
+- `phone_numbers`
+- `missed_calls`
+- `conversations`
+- `messages`
+- `leads`
+- `contacts`
+- `blocked_numbers`
+- `ai_prompts`
+- `notification_logs`
+- `audit_logs`
+- `subscriptions`
 
-RLS policies scope business records, customers, cases, messages, recovery events and integrations to the signed-in user. Admin users can be granted by setting `profiles.role = 'admin'`.
+RLS policies scope records to the business owner or admin users.
 
-## Recovery workflow
+## Twilio setup
 
-1. Sign up or log in at `/login`.
-2. Go to `/import`.
-3. Add an unpaid invoice, unanswered quote, stale lead, missed appointment or repeat-service opportunity.
-4. RecoverFlow creates the customer and follow-up case, scores urgency, and drafts a first message.
-5. Go to `/follow-ups/[id]` to edit the message, generate a new AI draft, schedule the next action or mark the case recovered.
-6. Use `/settings` to see the integration catalog for inbox, payment, CRM, scheduling, field-service and SMS products.
+1. Buy or configure a Twilio phone number.
+2. Set SMS webhook:
+
+   ```text
+   POST https://your-domain.com/api/twilio/inbound-sms
+   ```
+
+3. Configure missed-call/voice fallback webhook:
+
+   ```text
+   POST https://your-domain.com/api/twilio/missed-call
+   ```
+
+4. Add:
+
+   ```bash
+   TWILIO_ACCOUNT_SID=
+   TWILIO_AUTH_TOKEN=
+   TWILIO_MESSAGING_SERVICE_SID=
+   TWILIO_PHONE_NUMBER=
+   NEXT_PUBLIC_APP_URL=https://your-domain.com
+   ```
+
+Webhook signature validation is enabled when `TWILIO_AUTH_TOKEN` is present.
+
+## OpenAI setup
+
+Add:
+
+```bash
+OPENAI_API_KEY=
+OPENAI_MODEL=gpt-4o-mini
+```
+
+The AI returns strict JSON:
+
+```json
+{
+  "reply_to_caller": "",
+  "category": "new_lead | existing_customer | emergency | personal | spam | wrong_number | unknown",
+  "lead_complete": false,
+  "urgency": "low | medium | high | emergency",
+  "extracted_details": {
+    "name": "",
+    "phone": "",
+    "enquiry_type": "",
+    "job_description": "",
+    "address": "",
+    "preferred_callback_time": ""
+  },
+  "summary_for_owner": "",
+  "confidence_score": 0,
+  "should_notify_owner_now": false,
+  "should_stop_ai": false
+}
+```
+
+## Security notes
+
+- Service role key is server-only.
+- Twilio signatures are validated when credentials are configured.
+- Inbound simulator/Twilio paths rate-limit callers in mock mode.
+- AI conversations stop at `max_ai_messages_per_conversation`.
+- User input is sanitized before AI handling.
+- Important actions are audit logged.
+
+## Vercel deployment
+
+1. Import the GitHub repo into Vercel.
+2. Add all environment variables in Project Settings.
+3. Set `NEXT_PUBLIC_APP_URL` to the Vercel production URL.
+4. Run the Supabase schema.
+5. Configure Twilio webhooks to the Vercel URLs.
+6. Deploy.
 
 ## Scripts
 
@@ -99,9 +216,3 @@ npm run start
 npm run lint
 npm run typecheck
 ```
-
-## Notes
-
-- The product integration buttons are scaffolds for OAuth/webhook work; they are represented in the schema and UI but do not complete live handshakes yet.
-- OpenAI is optional for local demos. If `OPENAI_API_KEY` is missing, the API returns a deterministic fallback draft.
-- Outbound SMS/email sending is intentionally approval-first in this MVP; Twilio/Gmail/Outlook sending can be layered onto `follow_up_messages`.

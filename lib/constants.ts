@@ -1,132 +1,113 @@
 import {
+  AlertTriangle,
   BarChart3,
+  Bot,
   Building2,
-  CalendarClock,
   CreditCard,
-  FileSpreadsheet,
   LayoutDashboard,
   MessageSquareText,
-  Send,
+  Phone,
+  PhoneCall,
   Settings,
   ShieldCheck,
   Users,
 } from "lucide-react";
-import type { IntegrationProvider } from "@/lib/types";
+import type { ConversationCategory, LeadStatus } from "@/lib/types";
 
-export const appName = "RecoverFlow";
-export const parentBusiness = "Revenue recovery autopilot";
+export const appName = "CallBack AI";
+export const parentBusiness = "Miss a call. Don't lose the customer.";
 
-export const allowedImportMimeTypes = ["text/csv", "application/vnd.ms-excel"];
-export const maxImportBytes = 5 * 1024 * 1024;
+export const defaultFirstSms =
+  "Hi, thanks for calling [Business Name]. Sorry we missed your call. What can we help with?";
 
-export const caseTypeLabels = {
-  invoice: "Unpaid invoice",
-  quote: "Unanswered quote",
-  lead: "Cold lead",
-  appointment: "Missed appointment request",
-  repeat_service: "Repeat service due",
+export const leadStatusLabels: Record<LeadStatus, string> = {
+  new: "New",
+  contacted: "Contacted",
+  booked: "Booked",
+  quoted: "Quoted",
+  won: "Won",
+  lost: "Lost",
+  spam: "Spam",
+  personal: "Personal",
+  wrong_number: "Wrong number",
+  emergency: "Emergency",
 };
 
-export const followUpSequences = [
-  {
-    name: "Invoice recovery",
-    trigger: "Invoice is 3 days overdue",
-    steps: ["Friendly email", "SMS reminder", "Firm email with payment link"],
-  },
-  {
-    name: "Quote win-back",
-    trigger: "Quote has no reply after 48 hours",
-    steps: ["Helpful check-in", "Objection-handling email", "Book-a-call SMS"],
-  },
-  {
-    name: "Past customer reactivation",
-    trigger: "Repeat service window is open",
-    steps: ["Reminder email", "Calendar booking link", "Last-call SMS"],
-  },
-];
+export const categoryLabels: Record<ConversationCategory, string> = {
+  new_lead: "New lead",
+  existing_customer: "Existing customer",
+  emergency: "Emergency",
+  personal: "Personal",
+  spam: "Spam",
+  wrong_number: "Wrong number",
+  unknown: "Unknown",
+};
 
 export const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/accounts", label: "Accounts", icon: Send },
-  { href: "/import", label: "Import", icon: FileSpreadsheet },
-  { href: "/customers", label: "Customers", icon: Users },
-  { href: "/sequences", label: "Sequences", icon: CalendarClock },
+  { href: "/leads", label: "Leads inbox", icon: PhoneCall },
+  { href: "/conversations", label: "Conversations", icon: MessageSquareText },
+  { href: "/simulator", label: "Test simulator", icon: Bot },
+  { href: "/settings/phone", label: "Phone settings", icon: Phone },
+  { href: "/settings/ai", label: "AI settings", icon: Settings },
+  { href: "/settings/business", label: "Business profile", icon: Building2 },
+  { href: "/contacts", label: "Contacts", icon: Users },
   { href: "/pricing", label: "Pricing", icon: CreditCard },
-  { href: "/settings", label: "Settings", icon: Settings },
   { href: "/admin", label: "Admin", icon: ShieldCheck },
 ];
 
 export const dashboardStats = [
-  { label: "Revenue at risk", value: "$42.8k", detail: "Across 31 open follow-ups", icon: BarChart3 },
-  { label: "Recovered this month", value: "$18.6k", detail: "From invoices and stale quotes", icon: CreditCard },
-  { label: "Messages queued", value: "74", detail: "Email and SMS follow-ups", icon: MessageSquareText },
-  { label: "Connected sources", value: "10", detail: "Email, payments, CRM and scheduling", icon: Building2 },
+  { label: "Missed calls today", value: "12", detail: "9 were eligible for AI follow-up", icon: PhoneCall },
+  { label: "AI conversations started", value: "9", detail: "Median first reply under 10 seconds", icon: MessageSquareText },
+  { label: "Leads captured", value: "6", detail: "4 new enquiries, 2 existing customers", icon: Users },
+  { label: "Emergencies flagged", value: "1", detail: "Owner notified immediately", icon: AlertTriangle },
+  { label: "Personal/spam ignored", value: "3", detail: "No AI follow-up continued", icon: ShieldCheck },
+  { label: "Estimated recovered revenue", value: "$8.4k", detail: "Based on captured job value", icon: BarChart3 },
 ];
 
-export const integrationCatalog: Array<{
-  provider: IntegrationProvider;
-  name: string;
-  category: string;
-  purpose: string;
-}> = [
+export const industries = [
+  "Home services",
+  "Medical and dental clinics",
+  "Real estate",
+  "Consulting",
+  "Legal and accounting",
+  "Salons and med spas",
+  "Automotive repair",
+  "Fitness and wellness",
+];
+
+export const pricingPlans = [
   {
-    provider: "gmail",
-    name: "Gmail",
-    category: "Email",
-    purpose: "Detect replies and send follow-ups from the owner inbox.",
+    name: "Starter",
+    price: "$49",
+    features: [
+      "1 business number",
+      "100 missed-call follow-ups/month",
+      "SMS lead capture",
+      "Basic dashboard",
+    ],
   },
   {
-    provider: "outlook",
-    name: "Outlook",
-    category: "Email",
-    purpose: "Sync Microsoft 365 conversations and reply status.",
+    name: "Growth",
+    price: "$99",
+    highlighted: true,
+    features: [
+      "2 numbers",
+      "500 follow-ups/month",
+      "AI classification",
+      "Owner SMS/email alerts",
+      "Lead pipeline",
+    ],
   },
   {
-    provider: "quickbooks",
-    name: "QuickBooks",
-    category: "Accounting",
-    purpose: "Import overdue invoices, customer balances and payment links.",
-  },
-  {
-    provider: "stripe",
-    name: "Stripe",
-    category: "Payments",
-    purpose: "Track recovered payments and include hosted payment links.",
-  },
-  {
-    provider: "square",
-    name: "Square",
-    category: "Payments",
-    purpose: "Pull unpaid invoices and match in-person or online payments.",
-  },
-  {
-    provider: "calendly",
-    name: "Calendly",
-    category: "Scheduling",
-    purpose: "Book quote review calls and missed appointment follow-ups.",
-  },
-  {
-    provider: "hubspot",
-    name: "HubSpot",
-    category: "CRM",
-    purpose: "Recover stale deals, open quotes and unanswered form leads.",
-  },
-  {
-    provider: "jobber",
-    name: "Jobber",
-    category: "Field service",
-    purpose: "Import home-service quotes, jobs and client follow-up tasks.",
-  },
-  {
-    provider: "servicetitan",
-    name: "ServiceTitan",
-    category: "Field service",
-    purpose: "Sync enterprise service estimates and unscheduled opportunities.",
-  },
-  {
-    provider: "twilio",
-    name: "Twilio",
-    category: "Messaging",
-    purpose: "Send compliant SMS reminders and log delivery failures.",
+    name: "Pro",
+    price: "$199",
+    features: [
+      "5 numbers",
+      "2,000 follow-ups/month",
+      "Multiple staff alerts",
+      "Advanced rules",
+      "Priority support",
+    ],
   },
 ];

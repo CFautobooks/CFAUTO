@@ -8,7 +8,7 @@ export default function AdminPage() {
       <PageHeader
         eyebrow="Admin"
         title="Platform activity"
-        description="Admin view for users, open recovery cases, outbound message failures and recovered revenue events."
+        description="Admin view for users, missed-call volume, AI conversations, SMS delivery and emergency escalations."
       />
 
       <AdminSummary />
@@ -17,9 +17,9 @@ export default function AdminPage() {
         <h2 className="text-xl font-bold text-[#0b1f3a]">Operational alerts</h2>
         <div className="mt-5 space-y-3">
           {[
-            "Twilio delivery failed for three SMS reminders awaiting retry.",
-            "Stripe webhook has not confirmed payment status for invoice INV-1187.",
-            "HubSpot sync found duplicate contacts for Harbour Electrical Co.",
+            "Twilio signature validation failed for one webhook attempt.",
+            "Emergency conversation escalated from +61 422 555 888.",
+            "Mock mode is enabled because Twilio credentials are not configured.",
           ].map((alert, index) => (
             <div key={alert} className="rounded-2xl border border-slate-100 p-4">
               <p className="font-semibold text-slate-800">Alert #{index + 1}</p>

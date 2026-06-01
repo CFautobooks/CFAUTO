@@ -2,46 +2,19 @@ import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
-
-const plans = [
-  {
-    name: "Starter",
-    audience: "For solo service businesses",
-    price: "$49",
-    features: ["100 active follow-ups", "CSV and manual import", "AI email drafts"],
-  },
-  {
-    name: "Growth",
-    audience: "For teams with steady lead flow",
-    price: "$149",
-    features: ["500 active follow-ups", "Gmail, Outlook and Twilio workflows", "Recovered revenue tracking"],
-    highlighted: true,
-  },
-  {
-    name: "Ops",
-    audience: "For multi-location operators",
-    price: "$299",
-    features: ["2,000 active follow-ups", "QuickBooks, Stripe, Square and CRM sync", "Team approval controls"],
-  },
-  {
-    name: "Managed Recovery",
-    audience: "Done-for-you setup and tuning",
-    price: "Custom",
-    features: ["Sequence setup", "Integration onboarding", "Monthly recovery reporting"],
-  },
-];
+import { pricingPlans } from "@/lib/constants";
 
 export default function PricingPage() {
   return (
     <AppShell>
       <PageHeader
         eyebrow="Pricing"
-        title="Plans tied to recovered revenue"
-        description="Start with manual recovery, then scale into automated email, SMS, payment, CRM and field-service workflows."
+        title="Missed-call recovery pricing"
+        description="Stripe-ready pricing UI. Checkout is intentionally not enabled yet."
       />
 
-      <div className="grid gap-6 xl:grid-cols-4">
-        {plans.map((plan) => (
+      <div className="grid gap-6 xl:grid-cols-3">
+        {pricingPlans.map((plan) => (
           <div
             key={plan.name}
             className={`rounded-3xl p-6 shadow-sm ring-1 ${
@@ -51,7 +24,7 @@ export default function PricingPage() {
             }`}
           >
             <p className={plan.highlighted ? "text-emerald-200" : "text-emerald-600"}>
-              {plan.audience}
+              {plan.name === "Starter" ? "For sole traders" : plan.name === "Growth" ? "For growing teams" : "For high-volume teams"}
             </p>
             <h2 className="mt-3 text-2xl font-bold">{plan.name}</h2>
             <p className="mt-5 text-4xl font-black">
