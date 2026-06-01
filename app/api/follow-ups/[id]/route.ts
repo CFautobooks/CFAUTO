@@ -3,18 +3,15 @@ import { z } from "zod";
 import { createRouteSupabaseClient, readBearerToken } from "@/lib/supabase";
 
 const updateSchema = z.object({
-  supplier_name: z.string().optional(),
-  supplier_abn: z.string().optional(),
-  invoice_number: z.string().optional(),
-  invoice_date: z.string().optional().nullable(),
-  due_date: z.string().optional().nullable(),
-  description: z.string().optional(),
-  category: z.string().optional(),
-  subtotal: z.number().optional(),
-  gst_amount: z.number().optional(),
-  total_amount: z.number().optional(),
+  title: z.string().optional(),
+  amount_cents: z.number().optional(),
+  due_date: z.string().nullable().optional(),
+  next_follow_up_at: z.string().nullable().optional(),
+  channel: z.enum(["email", "sms", "phone"]).optional(),
+  draft_subject: z.string().optional(),
+  draft_body: z.string().optional(),
   notes: z.string().optional(),
-  status: z.enum(["uploaded", "extracted", "needs_review", "approved", "exported"]).optional(),
+  status: z.enum(["new", "drafted", "scheduled", "sent", "replied", "recovered", "paused", "closed"]).optional(),
 });
 
 async function authenticatedClient(request: Request) {
@@ -41,17 +38,17 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     const { id } = await params;
     const { supabase, user } = await authenticatedClient(request);
     const { data, error } = await supabase
-      .from("transactions")
-      .select("*, transaction_line_items(*)")
+      .from("follow_up_cases")
+      .select("*, customer:customers(*), messages:follow_up_messages(*)")
       .eq("id", id)
       .eq("user_id", user.id)
       .single();
 
     if (error) throw new Error(error.message);
 
-    return NextResponse.json({ transaction: data });
+    return NextResponse.json({ case: data });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unable to load transaction.";
+    const message = error instanceof Error ? error.message : "Unable to load follow-up.";
     return NextResponse.json({ error: message }, { status: message.includes("Authentication") ? 401 : 500 });
   }
 }
@@ -63,23 +60,36 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const body = updateSchema.parse(await request.json());
 
     const { data, error } = await supabase
-      .from("transactions")
+      .from("follow_up_cases")
       .update({
         ...body,
-        invoice_date: body.invoice_date || null,
         due_date: body.due_date || null,
+        next_follow_up_at: body.next_follow_up_at || null,
         updated_at: new Date().toISOString(),
       })
       .eq("id", id)
       .eq("user_id", user.id)
-      .select("*, transaction_line_items(*)")
+      .select("*, customer:customers(*)")
       .single();
 
     if (error) throw new Error(error.message);
 
-    return NextResponse.json({ transaction: data });
+    if (body.draft_body || body.draft_subject) {
+      await supabase.from("follow_up_messages").insert({
+        case_id: id,
+        user_id: user.id,
+        channel: data.channel,
+        subject: data.draft_subject,
+        body: data.draft_body,
+        status: data.status === "scheduled" ? "queued" : "draft",
+        provider: data.channel === "sms" ? "twilio" : null,
+        scheduled_at: data.next_follow_up_at,
+      });
+    }
+
+    return NextResponse.json({ case: data });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unable to save transaction.";
+    const message = error instanceof Error ? error.message : "Unable to save follow-up.";
     return NextResponse.json({ error: message }, { status: message.includes("Authentication") ? 401 : 500 });
   }
 }

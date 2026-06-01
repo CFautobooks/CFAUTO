@@ -5,9 +5,10 @@ import { createBrowserSupabaseClient } from "@/lib/supabase";
 
 const fallback = {
   users: 48,
-  uploads: 1284,
-  failed_extractions: 9,
-  needs_review: 17,
+  open_cases: 312,
+  messages_sent: 1284,
+  failed_sends: 9,
+  recovered_cases: 86,
 };
 
 export function AdminSummary() {
@@ -49,9 +50,10 @@ export function AdminSummary() {
       <section className="grid gap-5 md:grid-cols-4">
         {[
           ["Users", metrics.users],
-          ["Uploads", metrics.uploads],
-          ["Failed extractions", metrics.failed_extractions],
-          ["Needs review", metrics.needs_review],
+          ["Open cases", metrics.open_cases],
+          ["Messages sent", metrics.messages_sent],
+          ["Failed sends", metrics.failed_sends],
+          ["Recovered", metrics.recovered_cases],
         ].map(([label, value]) => (
           <div key={label} className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
             <p className="text-sm font-semibold text-slate-500">{label}</p>

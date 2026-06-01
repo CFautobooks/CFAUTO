@@ -1,5 +1,5 @@
--- CF AutoBooks Supabase schema
--- Run this in the Supabase SQL editor, then create a private storage bucket named "documents".
+-- RecoverFlow Supabase schema
+-- Run this in the Supabase SQL editor for a fresh project.
 
 create extension if not exists "pgcrypto";
 
@@ -17,7 +17,7 @@ create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   email text,
   full_name text,
-  role text not null default 'user' check (role in ('user', 'bookkeeper', 'admin')),
+  role text not null default 'owner' check (role in ('owner', 'staff', 'admin')),
   plan text default 'starter',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -27,106 +27,106 @@ create table if not exists public.businesses (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
   name text not null,
-  abn text,
-  gst_registered boolean not null default true,
+  industry text,
+  default_sender_name text,
   contact_email text,
   contact_phone text,
+  website text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
 
-create table if not exists public.clients (
+create table if not exists public.customers (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
   business_id uuid references public.businesses(id) on delete set null,
-  business_name text not null,
+  company_name text not null,
   contact_name text,
   email text,
-  abn text,
-  status text not null default 'active',
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
-);
-
-create table if not exists public.documents (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
-  business_id uuid references public.businesses(id) on delete set null,
-  client_id uuid references public.clients(id) on delete set null,
-  file_name text not null,
-  file_path text not null,
-  mime_type text not null,
-  file_size bigint not null,
-  status text not null default 'uploaded' check (status in ('uploaded', 'extracted', 'needs_review', 'approved', 'exported', 'failed')),
-  extracted_text text,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
-);
-
-create table if not exists public.categories (
-  id uuid primary key default gen_random_uuid(),
-  name text not null unique,
-  gst_default boolean not null default true,
-  created_at timestamptz not null default now()
-);
-
-create table if not exists public.transactions (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
-  business_id uuid references public.businesses(id) on delete set null,
-  client_id uuid references public.clients(id) on delete set null,
-  document_id uuid references public.documents(id) on delete set null,
-  supplier_name text,
-  supplier_abn text,
-  invoice_number text,
-  invoice_date date,
-  due_date date,
-  description text,
-  category text,
-  subtotal numeric(12,2) default 0,
-  gst_amount numeric(12,2) default 0,
-  total_amount numeric(12,2) default 0,
-  currency text not null default 'AUD',
-  confidence_score numeric(5,2) default 0,
-  status text not null default 'uploaded' check (status in ('uploaded', 'extracted', 'needs_review', 'approved', 'exported')),
+  phone text,
+  lifecycle_stage text not null default 'lead' check (lifecycle_stage in ('lead', 'quoted', 'customer', 'past_customer')),
+  total_revenue_at_risk numeric(12,2) not null default 0,
+  last_contacted_at timestamptz,
   notes text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
 
-create table if not exists public.transaction_line_items (
+create table if not exists public.follow_up_sequences (
   id uuid primary key default gen_random_uuid(),
-  transaction_id uuid not null references public.transactions(id) on delete cascade,
   user_id uuid not null references auth.users(id) on delete cascade,
-  description text not null,
-  quantity numeric(12,2),
-  unit_price numeric(12,2),
-  gst_amount numeric(12,2),
-  total_amount numeric(12,2),
-  order_index integer not null default 0,
+  business_id uuid references public.businesses(id) on delete cascade,
+  name text not null,
+  trigger_rule jsonb not null default '{}',
+  steps jsonb not null default '[]',
+  is_active boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.follow_up_cases (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  business_id uuid references public.businesses(id) on delete set null,
+  customer_id uuid references public.customers(id) on delete set null,
+  sequence_id uuid references public.follow_up_sequences(id) on delete set null,
+  case_type text not null check (case_type in ('invoice', 'quote', 'lead', 'appointment', 'repeat_service')),
+  title text not null,
+  source text not null default 'manual' check (
+    source in ('manual', 'csv', 'gmail', 'outlook', 'quickbooks', 'stripe', 'square', 'calendly', 'hubspot', 'jobber', 'servicetitan', 'twilio')
+  ),
+  amount_cents integer not null default 0,
+  currency text not null default 'AUD',
+  due_date date,
+  last_contacted_at timestamptz,
+  next_follow_up_at timestamptz,
+  recovery_score numeric(5,2) not null default 0,
+  status text not null default 'new' check (status in ('new', 'drafted', 'scheduled', 'sent', 'replied', 'recovered', 'paused', 'closed')),
+  channel text not null default 'email' check (channel in ('email', 'sms', 'phone')),
+  draft_subject text,
+  draft_body text,
+  sequence_name text,
+  notes text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.follow_up_messages (
+  id uuid primary key default gen_random_uuid(),
+  case_id uuid not null references public.follow_up_cases(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  channel text not null check (channel in ('email', 'sms', 'phone')),
+  subject text,
+  body text not null,
+  status text not null default 'draft' check (status in ('draft', 'queued', 'sent', 'failed', 'replied')),
+  provider text check (provider in ('gmail', 'outlook', 'twilio')),
+  scheduled_at timestamptz,
+  sent_at timestamptz,
+  error_message text,
   created_at timestamptz not null default now()
 );
 
-create table if not exists public.extraction_logs (
+create table if not exists public.recovery_events (
   id uuid primary key default gen_random_uuid(),
-  user_id uuid references auth.users(id) on delete set null,
-  document_id uuid references public.documents(id) on delete set null,
-  transaction_id uuid references public.transactions(id) on delete set null,
-  provider text not null default 'openai',
-  status text not null check (status in ('success', 'failed')),
-  extracted_text text,
-  raw_response jsonb,
-  error_message text,
-  created_at timestamptz not null default now()
+  case_id uuid references public.follow_up_cases(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  event_type text not null check (event_type in ('reply', 'payment', 'booking', 'manual_close')),
+  amount_cents integer not null default 0,
+  provider text,
+  payload jsonb not null default '{}',
+  occurred_at timestamptz not null default now()
 );
 
 create table if not exists public.integrations (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
   business_id uuid references public.businesses(id) on delete cascade,
-  provider text not null check (provider in ('myob', 'xero')),
-  status text not null default 'coming_soon',
+  provider text not null check (
+    provider in ('gmail', 'outlook', 'quickbooks', 'stripe', 'square', 'calendly', 'hubspot', 'jobber', 'servicetitan', 'twilio')
+  ),
+  status text not null default 'not_connected' check (status in ('not_connected', 'connected', 'error', 'paused')),
   config jsonb not null default '{}',
+  last_synced_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   unique (user_id, business_id, provider)
@@ -158,9 +158,9 @@ begin
   foreach table_name in array array[
     'profiles',
     'businesses',
-    'clients',
-    'documents',
-    'transactions',
+    'customers',
+    'follow_up_sequences',
+    'follow_up_cases',
     'integrations'
   ]
   loop
@@ -184,12 +184,11 @@ $$;
 
 alter table public.profiles enable row level security;
 alter table public.businesses enable row level security;
-alter table public.clients enable row level security;
-alter table public.documents enable row level security;
-alter table public.categories enable row level security;
-alter table public.transactions enable row level security;
-alter table public.transaction_line_items enable row level security;
-alter table public.extraction_logs enable row level security;
+alter table public.customers enable row level security;
+alter table public.follow_up_sequences enable row level security;
+alter table public.follow_up_cases enable row level security;
+alter table public.follow_up_messages enable row level security;
+alter table public.recovery_events enable row level security;
 alter table public.integrations enable row level security;
 
 drop policy if exists "profiles_select_own_or_admin" on public.profiles;
@@ -204,83 +203,35 @@ drop policy if exists "profiles_insert_self" on public.profiles;
 create policy "profiles_insert_self" on public.profiles
   for insert with check (id = auth.uid() or public.is_admin());
 
-drop policy if exists "categories_read_authenticated" on public.categories;
-create policy "categories_read_authenticated" on public.categories
-  for select to authenticated using (true);
-
 drop policy if exists "businesses_crud_own" on public.businesses;
 create policy "businesses_crud_own" on public.businesses
   for all using (user_id = auth.uid() or public.is_admin()) with check (user_id = auth.uid() or public.is_admin());
 
-drop policy if exists "clients_crud_own" on public.clients;
-create policy "clients_crud_own" on public.clients
+drop policy if exists "customers_crud_own" on public.customers;
+create policy "customers_crud_own" on public.customers
   for all using (user_id = auth.uid() or public.is_admin()) with check (user_id = auth.uid() or public.is_admin());
 
-drop policy if exists "documents_crud_own" on public.documents;
-create policy "documents_crud_own" on public.documents
+drop policy if exists "follow_up_sequences_crud_own" on public.follow_up_sequences;
+create policy "follow_up_sequences_crud_own" on public.follow_up_sequences
   for all using (user_id = auth.uid() or public.is_admin()) with check (user_id = auth.uid() or public.is_admin());
 
-drop policy if exists "transactions_crud_own" on public.transactions;
-create policy "transactions_crud_own" on public.transactions
+drop policy if exists "follow_up_cases_crud_own" on public.follow_up_cases;
+create policy "follow_up_cases_crud_own" on public.follow_up_cases
   for all using (user_id = auth.uid() or public.is_admin()) with check (user_id = auth.uid() or public.is_admin());
 
-drop policy if exists "line_items_crud_own" on public.transaction_line_items;
-create policy "line_items_crud_own" on public.transaction_line_items
+drop policy if exists "follow_up_messages_crud_own" on public.follow_up_messages;
+create policy "follow_up_messages_crud_own" on public.follow_up_messages
   for all using (user_id = auth.uid() or public.is_admin()) with check (user_id = auth.uid() or public.is_admin());
 
-drop policy if exists "extraction_logs_read_own_or_admin" on public.extraction_logs;
-create policy "extraction_logs_read_own_or_admin" on public.extraction_logs
-  for select using (user_id = auth.uid() or public.is_admin());
+drop policy if exists "recovery_events_crud_own" on public.recovery_events;
+create policy "recovery_events_crud_own" on public.recovery_events
+  for all using (user_id = auth.uid() or public.is_admin()) with check (user_id = auth.uid() or public.is_admin());
 
 drop policy if exists "integrations_crud_own" on public.integrations;
 create policy "integrations_crud_own" on public.integrations
   for all using (user_id = auth.uid() or public.is_admin()) with check (user_id = auth.uid() or public.is_admin());
 
-insert into public.categories (name)
-values
-  ('Advertising and marketing'),
-  ('Bank fees'),
-  ('Cleaning'),
-  ('Computer and software'),
-  ('Contractors'),
-  ('Equipment and tools'),
-  ('Fuel and motor vehicle'),
-  ('Insurance'),
-  ('Meals and entertainment'),
-  ('Office supplies'),
-  ('Professional fees'),
-  ('Rent'),
-  ('Repairs and maintenance'),
-  ('Telephone and internet'),
-  ('Travel'),
-  ('Utilities'),
-  ('Other expenses')
-on conflict (name) do nothing;
-
-insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-values (
-  'documents',
-  'documents',
-  false,
-  10485760,
-  array['application/pdf', 'image/jpeg', 'image/png']
-)
-on conflict (id) do update
-set public = excluded.public,
-    file_size_limit = excluded.file_size_limit,
-    allowed_mime_types = excluded.allowed_mime_types;
-
-drop policy if exists "documents_storage_read_own" on storage.objects;
-create policy "documents_storage_read_own" on storage.objects
-  for select to authenticated
-  using (bucket_id = 'documents' and (storage.foldername(name))[1] = auth.uid()::text);
-
-drop policy if exists "documents_storage_insert_own" on storage.objects;
-create policy "documents_storage_insert_own" on storage.objects
-  for insert to authenticated
-  with check (bucket_id = 'documents' and (storage.foldername(name))[1] = auth.uid()::text);
-
-drop policy if exists "documents_storage_update_own" on storage.objects;
-create policy "documents_storage_update_own" on storage.objects
-  for update to authenticated
-  using (bucket_id = 'documents' and (storage.foldername(name))[1] = auth.uid()::text);
+create index if not exists follow_up_cases_user_status_idx on public.follow_up_cases(user_id, status);
+create index if not exists follow_up_cases_next_follow_up_idx on public.follow_up_cases(next_follow_up_at);
+create index if not exists follow_up_messages_case_idx on public.follow_up_messages(case_id);
+create index if not exists recovery_events_case_idx on public.recovery_events(case_id);

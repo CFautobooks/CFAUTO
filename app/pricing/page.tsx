@@ -6,28 +6,28 @@ import { PageHeader } from "@/components/page-header";
 const plans = [
   {
     name: "Starter",
-    audience: "For sole traders",
-    price: "$19",
-    features: ["50 uploads per month", "GST and ABN detection", "Review workflow"],
+    audience: "For solo service businesses",
+    price: "$49",
+    features: ["100 active follow-ups", "CSV and manual import", "AI email drafts"],
   },
   {
-    name: "Business",
-    audience: "For small businesses",
-    price: "$49",
-    features: ["200 uploads per month", "Team-ready dashboard", "Priority extraction queue"],
+    name: "Growth",
+    audience: "For teams with steady lead flow",
+    price: "$149",
+    features: ["500 active follow-ups", "Gmail, Outlook and Twilio workflows", "Recovered revenue tracking"],
     highlighted: true,
   },
   {
-    name: "Bookkeeper",
-    audience: "For bookkeepers managing multiple clients",
-    price: "$129",
-    features: ["Multi-client workspace", "Client upload tracking", "Admin extraction logs"],
+    name: "Ops",
+    audience: "For multi-location operators",
+    price: "$299",
+    features: ["2,000 active follow-ups", "QuickBooks, Stripe, Square and CRM sync", "Team approval controls"],
   },
   {
-    name: "Carmichael Financials",
-    audience: "Done-for-you bookkeeping service",
+    name: "Managed Recovery",
+    audience: "Done-for-you setup and tuning",
     price: "Custom",
-    features: ["Managed review", "Bookkeeping support", "Monthly reporting workflow"],
+    features: ["Sequence setup", "Integration onboarding", "Monthly recovery reporting"],
   },
 ];
 
@@ -36,8 +36,8 @@ export default function PricingPage() {
     <AppShell>
       <PageHeader
         eyebrow="Pricing"
-        title="Plans for every bookkeeping workflow"
-        description="Choose a plan for your upload volume, review process and client management needs."
+        title="Plans tied to recovered revenue"
+        description="Start with manual recovery, then scale into automated email, SMS, payment, CRM and field-service workflows."
       />
 
       <div className="grid gap-6 xl:grid-cols-4">

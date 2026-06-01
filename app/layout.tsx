@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "CF AutoBooks | AI bookkeeping for Australian businesses",
+  title: "RecoverFlow | AI revenue recovery for service businesses",
   description:
-    "CF AutoBooks by Carmichael Financials extracts invoice and receipt data, GST and categories for Australian small businesses.",
+    "RecoverFlow helps service businesses follow up unpaid invoices, unanswered quotes, stale leads and repeat service opportunities.",
 };
 
 export default function RootLayout({
